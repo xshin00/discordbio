@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>shino — Discord Bio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-primary: #313338;
+      --bg-card: #111214;
+      --bg-input: #1e1f22;
+      --accent: #5865f2;
+      --accent-hover: #4752c4;
+      --online: #23a559;
+      --text-primary: #f2f3f5;
+      --text-secondary: #b5bac1;
+      --text-muted: #80848e;
+      --border: #3f4147;
+      --banner: linear-gradient(135deg, #5865f2 0%, #7289da 40%, #9b59b6 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #050507;
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    /* ── ANIMOWANE TŁO ── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    /* Mroczne mgławice */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+    }
+
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+      top: -200px; left: -150px;
+      animation: orbFloat1 20s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(180,180,180,0.05) 0%, transparent 70%);
+      bottom: -150px; right: -100px;
+      animation: orbFloat2 25s ease-in-out infinite;
+    }
+
+    .orb-3 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+      top: 40%; left: 40%;
+      animation: orbFloat3 18s ease-in-out infinite;
+    }
+
+    @keyframes orbFloat1 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(100px,80px) scale(1.08); }
+      66%      { transform: translate(40px,160px) scale(0.95); }
+    }
+
+    @keyframes orbFloat2 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(-90px,-70px) scale(1.1); }
+      66%      { transform: translate(-40px,-150px) scale(1.05); }
+    }
+
+    @keyframes orbFloat3 {
+      0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+      50%      { transform: translate(-50%,-50%) scale(1.5); opacity: 0.3; }
+    }
+
+    /* Skanlines — efekt retro VHS */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.18) 2px,
+        rgba(0,0,0,0.18) 4px
+      );
+      pointer-events: none;
+      animation: scanMove 8s linear infinite;
+    }
+
+    @keyframes scanMove {
+      0%   { background-position: 0 0; }
+      100% { background-position: 0 100px; }
+    }
+
+    /* Subtelny szum — grain overlay */
+    .grain {
+      position: absolute;
+      inset: -50%;
+      width: 200%; height: 200%;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      animation: grainShift 0.15s steps(1) infinite;
+    }
+
+    @keyframes grainShift {
+      0%  { transform: translate(0,0); }
+      20% { transform: translate(-3px,2px); }
+      40% { transform: translate(2px,-3px); }
+      60% { transform: translate(-1px,3px); }
+      80% { transform: translate(3px,1px); }
+      100%{ transform: translate(0,0); }
+    }
+
+    /* Migoczące pyłki */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      animation: twinkle ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%,100% { opacity: 0; transform: scale(0.4); }
+      50%      { opacity: 0.5; transform: scale(1); }
+    }
+
+    /* Poziome smugi światła */
+    .light-streak {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      left: 0; right: 0;
+      animation: streakMove linear infinite;
+    }
+
+    @keyframes streakMove {
+      0%   { top: -2%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 102%; opacity: 0; }
+    }
+
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .profile-card {
+      width: 100%;
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+      animation: cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── BANNER ── */
+    .banner {
+      height: 120px;
+      background: var(--banner);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Zamień src="" na link do swojego banera */
+    .banner-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ── AVATAR ── */
+    .avatar-row {
+      position: relative;
+      padding: 0 16px;
+      height: 48px;
+    }
+
+    .avatar-wrapper {
+      position: absolute;
+      top: -48px;
+      left: 16px;
+    }
+
+    .avatar-ring {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      padding: 4px;
+      position: relative;
+    }
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--accent);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Zamień src="" na link do swojego avatara */
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .avatar svg { width: 58px; height: 58px; }
+
+    .status-dot {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--online);
+      border: 3px solid var(--bg-card);
+      box-shadow: 0 0 8px rgba(35,165,89,0.5);
+    }
+
+    .action-buttons {
+      position: absolute;
+      right: 16px;
+      top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-message {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(88,101,242,0.35);
+    }
+
+    .btn-message:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(88,101,242,0.5);
+    }
+
+    .btn-more {
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      border: none;
+      border-radius: 8px;
+      width: 36px; height: 36px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .btn-more:hover { background: var(--border); }
+
+    .user-info { padding: 8px 16px 16px; }
+
+    .username {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+      margin-bottom: 2px;
+    }
+
+    .username .discriminator { color: var(--text-muted); font-weight: 600; font-size: 16px; }
+
+    .custom-status {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .custom-status .status-emoji { font-size: 15px; }
+
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+
+    .tab {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .tab.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text-secondary); }
+
+    .tab-content { padding: 16px; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      margin-top: 14px;
+    }
+
+    .section-label:first-child { margin-top: 0; }
+
+    .bio-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      background: var(--bg-input);
+      border-radius: 8px;
+      padding: 12px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .bio-text p { margin-bottom: 8px; }
+    .bio-text p:last-child { margin-bottom: 0; }
+    .bio-text .highlight { color: var(--accent); font-weight: 700; }
+
+    .activity-card {
+      background: var(--bg-input);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border: 1px solid var(--border);
+    }
+
+    .activity-icon {
+      width: 48px; height: 48px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #08091a, #020d37);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+      
+    }
+    
+    .activity-icon img {
+     width: 38px;
+     height: 38px;
+     object-fit: cover;
+    }
+
+
+    
+
+    .activity-info { flex: 1; min-width: 0; }
+
+    .activity-title {
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px;
+    }
+
+    .activity-name {
+      font-size: 14px; font-weight: 700; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .activity-detail { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    .activity-time {
+      font-size: 12px; color: var(--text-muted); margin-top: 4px;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .time-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--online); display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .member-since {
+      font-size: 14px; color: var(--text-primary);
+      font-weight: 600; display: flex; align-items: center; gap: 8px;
+    }
+
+    .member-since .date-badge {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 13px; color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badges-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .badge {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px;
+      font-size: 12px; font-weight: 700; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 6px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .badge:hover { border-color: var(--accent); color: var(--text-primary); }
+    .badge .badge-icon { font-size: 14px; }
+
+    .note-box {
+      background: var(--bg-input); border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; color: var(--text-muted);
+      border: 1px solid transparent; cursor: text;
+      transition: border-color 0.15s; font-style: italic;
+    }
+
+    .note-box:hover { border-color: var(--border); color: var(--text-secondary); }
+
+    .extended-card {
+      width: 100%; background: var(--bg-card); border-radius: 16px;
+      padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: cardIn 0.5s 0.1s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    .ext-title {
+      font-size: 13px; font-weight: 800; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .ext-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+
+    .stat-box {
+      background: var(--bg-input); border-radius: 10px; padding: 12px;
+      text-align: center; border: 1px solid var(--border);
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .stat-box:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+    .stat-value {
+      font-size: 22px; font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 11px; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-top: 2px;
+    }
+
+    .interests-list { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .interest-tag {
+      background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.3);
+      color: #8a96f8; border-radius: 20px; padding: 5px 12px;
+      font-size: 12px; font-weight: 700; transition: background 0.15s, transform 0.1s;
+    }
+
+    .interest-tag:hover { background: rgba(88,101,242,0.28); transform: translateY(-1px); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Animowane tło -->
+<div class="bg-canvas">
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+  <div class="particles" id="particles"></div>
+</div>
+
+<div class="page-wrapper">
+
+  <div class="profile-card">
+
+    <!-- BANER: zamień src="" na swój link -->
+    <div class="banner">
+      <img class="banner-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Alexandre_Cabanel_-_Fallen_Angel.jpg/1920px-Alexandre_Cabanel_-_Fallen_Angel.jpg" alt=""/>
+    </div>
+
+    <div class="avatar-row">
+      <div class="avatar-wrapper">
+        <div class="avatar-ring">
+          <div class="avatar">
+            <!-- AVATAR: zamień src="" na swój link -->
+            <img src="https://i.pinimg.com/736x/95/d8/01/95d8018260b28f9e8f8e684aa348cb4a.jpg" alt="avatar"/>
+          </div>
+          <div class="status-dot"></div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn-message" onclick="window.location.href='https://discord.gg/hdR8kckvJW'">Send Message</button>
+        <button class="btn-more">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="user-info">
+      <div class="username">shino<span class="discriminator"></span></div>
+      <div class="custom-status">
+        <span class="status-emoji">🎮</span>
+        <span>Online</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('info')">User Info</div>
+        <div class="tab" onclick="switchTab('servers')">Mutual Servers</div>
+        <div class="tab" onclick="switchTab('friends')">Mutual Friends</div>
+      </div>
+
+      <div class="tab-panel active" id="tab-info">
+        <div class="tab-content">
+
+          <div class="section-label">About me</div>
+          <div class="bio-text">
+            <p>Hej! Jestem <span class="highlight">shino</span> 👋</p>
+            <p>Html Dev & Trader</p>
+            <p>📍 Polska &nbsp;•&nbsp; 💵 Trader &nbsp;•&nbsp; 💻 Dev</p>
+          </div>
+
+          <div class="section-label">Activity</div>
+          <div class="activity-card">
+            <div class="activity-icon">
+
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Visual_Studio_Code_1.35_icon.svg/960px-Visual_Studio_Code_1.35_icon.svg.png" alt="avatar"/>
+            </div>
+            <div class="activity-info">
+              <div class="activity-title">Playing a game</div>
+              <div class="activity-name">Visual Studio Code</div>
+              <div class="activity-detail">index.html</div>
+              <div class="activity-time">
+                <span class="time-dot"></span>
+                od 3 godzin
+              </div>
+            </div>
+          </div>
+
+          <div class="section-label">Member since</div>
+          <div class="member-since">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+            </svg>
+            <span class="date-badge">2024-04-14</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-servers">
+        <div class="tab-content">
+          <div class="section-label">Mutual Servers</div>
+          <div style="color:var(--text-muted);font-size:14px;padding:8px 0;">Brak wspólnych serwerów.</div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-friends">
+        <div class="tab-content">
+          <div class="section-label">Mutual Friends</div>
+          <div style="color:var(--text-muted);font-size:14px;padding:8px 0;">Brak wspólnych znajomych.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+</div>
+
+<script>
+  // Generuj cząsteczki
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top  = Math.random() * 100 + '%';
+    p.style.animationDuration  = (2 + Math.random() * 5) + 's';
+    p.style.animationDelay     = (Math.random() * 6) + 's';
+    p.style.width  = (Math.random() > 0.7 ? 3 : 2) + 'px';
+    p.style.height = p.style.width;
+    p.style.opacity = Math.random() * 0.6;
+    container.appendChild(p);
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => {
+      const names = ['info','servers','friends'];
+      t.classList.toggle('active', names[i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + name);
+    });
+  }
+</script>
+</body>
+</html>
